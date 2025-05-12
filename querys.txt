@@ -1,0 +1,137 @@
+CREATE DATABASE hoteldb;
+
+select current_database (); 
+
+-- Tabla Clientes
+CREATE TABLE Clientes (
+    id_cliente SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    documento_identidad VARCHAR(50) UNIQUE NOT NULL,
+    fecha_registro DATE DEFAULT CURRENT_DATE
+);
+
+-- Tabla Habitaciones
+CREATE TABLE Habitaciones (
+    id_habitacion SERIAL PRIMARY KEY,
+    numero VARCHAR(10) UNIQUE NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    capacidad INT NOT NULL CHECK (capacidad > 0),
+    precio_noche NUMERIC(10,2) NOT NULL CHECK (precio_noche >= 0),
+    estado VARCHAR(20) NOT NULL CHECK (estado IN ('Disponible', 'Ocupada', 'Mantenimiento'))
+);
+
+-- Tabla Reservas
+CREATE TABLE Reservas (
+    id_reserva SERIAL PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    fecha_reserva DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_entrada DATE NOT NULL,
+    fecha_salida DATE NOT NULL,
+    estado VARCHAR(20) DEFAULT 'Confirmada' CHECK (estado IN ('Confirmada', 'Cancelada', 'Finalizada')),
+    FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente)
+);
+
+
+
+
+-- Tabla Detalle_Reserva
+CREATE TABLE Detalle_Reserva (
+    id_detalle SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    id_habitacion INT NOT NULL,
+    precio_por_noche NUMERIC(10,2) NOT NULL CHECK (precio_por_noche >= 0),
+    nro_noches INT NOT NULL CHECK (nro_noches > 0),
+    subtotal NUMERIC(10,2) NOT NULL,
+    FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva),
+    FOREIGN KEY (id_habitacion) REFERENCES Habitaciones(id_habitacion)
+);
+
+-- Tabla Pagos
+CREATE TABLE Pagos (
+    id_pago SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    fecha_pago DATE NOT NULL,
+    monto NUMERIC(10,2) NOT NULL CHECK (monto >= 0),
+    metodo_pago VARCHAR(20) NOT NULL CHECK (metodo_pago IN ('Efectivo', 'Tarjeta', 'Transferencia')),
+    estado_pago VARCHAR(20) DEFAULT 'Pendiente' CHECK (estado_pago IN ('Pagado', 'Pendiente', 'Reembolsado')),
+    FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva)
+);
+
+-- Tabla Servicios_Hotel
+CREATE TABLE Servicios_Hotel (
+    id_servicio SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0)
+);
+
+-- Tabla Servicios_Exterior
+CREATE TABLE Servicios_Exterior (
+    id_servicio SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    proveedor VARCHAR(100),
+    precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0)
+);
+
+-- Tabla Servicios_Reserva
+CREATE TABLE Servicios_Reserva (
+    id_servicio_reserva SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    id_servicio INT NOT NULL,
+    tipo_servicio VARCHAR(10) NOT NULL CHECK (tipo_servicio IN ('hotel','exterior')),
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    precio_unitario NUMERIC(10,2) NOT NULL,
+    subtotal NUMERIC(10,2) NOT NULL,
+    FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva)
+);
+
+-- Tabla CheckIn_CheckOut
+CREATE TABLE CheckIn_CheckOut (
+    id_control SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    fecha_checkin TIMESTAMP,
+    fecha_checkout TIMESTAMP,
+    FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva)
+);
+
+-- Tabla Recibos
+CREATE TABLE Recibos (
+    id_recibo SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    id_pago INT NOT NULL,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total NUMERIC(10,2) NOT NULL CHECK (total >= 0),
+    impuestos NUMERIC(10,2) DEFAULT 0 CHECK (impuestos >= 0),
+    observaciones TEXT,
+    FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva),
+    FOREIGN KEY (id_pago) REFERENCES Pagos(id_pago),
+    UNIQUE (id_pago)
+);
+
+Select * from Clientes ;
+Select * from Reservas ;
+
+
+INSERT INTO Reservas (id_cliente, fecha_reserva, fecha_entrada, fecha_salida, estado)
+VALUES (1, CURRENT_DATE, '2025-05-10', '2025-05-15', 'Confirmada');
+
+INSERT INTO Clientes (nombre, apellido, correo, telefono, documento_identidad)
+VALUES ('John', 'Doe', 'john.doe@example.com', '1234567890', '123456789');
+
+
+-- Insert sample rooms into the Habitaciones table
+INSERT INTO Habitaciones (numero, tipo, capacidad, precio_noche, estado)
+VALUES 
+('101', 'Individual', 1, 50.00, 'Disponible'),
+('102', 'Doble', 2, 75.00, 'Disponible'),
+('103', 'Suite', 4, 150.00, 'Ocupada'),
+('104', 'Familiar', 6, 200.00, 'Disponible'),
+('105', 'Individual', 1, 55.00, 'Mantenimiento'),
+('106', 'Doble', 2, 80.00, 'Disponible'),
+('107', 'Suite', 4, 160.00, 'Disponible'),
+('108', 'Familiar', 6, 210.00, 'Ocupada');
+
