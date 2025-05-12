@@ -40,6 +40,7 @@ class Reserva(db.Model):
     __tablename__ = 'reservas'
     id_reserva = db.Column(db.Integer, primary_key=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('clientes.id_cliente'), nullable=False)
+    id_habitacion = db.Column(db.Integer, db.ForeignKey('habitaciones.id_habitacion'), nullable=False)  # Room is required
     fecha_reserva = db.Column(db.Date, default=datetime.utcnow)
     fecha_entrada = db.Column(db.Date, nullable=False)
     fecha_salida = db.Column(db.Date, nullable=False)
@@ -109,23 +110,57 @@ class Recibo(db.Model):
 
 @app.route("/reservas", methods=["GET"])
 def obtener_reservas():
-    reservas = Reserva.query.all()
-    resultado = []
-    for r in reservas:
-        resultado.append({
-            "id_reserva": r.id_reserva,
-            "id_cliente": r.id_cliente,
-            "fecha_reserva": r.fecha_reserva.isoformat(),
-            "fecha_entrada": r.fecha_entrada.isoformat(),
-            "fecha_salida": r.fecha_salida.isoformat(),
-            "estado": r.estado
-        })
-    return jsonify(resultado), 200
+    """
+    Obtiene todas las reservas junto con la información del cliente y la habitación asociada.
+    """
+    try:
+        # Query to join Reservas with Clientes and Habitaciones
+        reservas = db.session.query(
+            Reserva.id_reserva,
+            Reserva.fecha_reserva,
+            Reserva.fecha_entrada,
+            Reserva.fecha_salida,
+            Reserva.estado,
+            Cliente.id_cliente,
+            Cliente.nombre.label("cliente_nombre"),
+            Cliente.telefono.label("cliente_telefono"),
+            Habitacion.numero.label("habitacion_numero"),
+            Habitacion.tipo.label("habitacion_tipo")
+        ).join(Cliente, Reserva.id_cliente == Cliente.id_cliente)\
+         .join(Habitacion, Reserva.id_habitacion == Habitacion.id_habitacion).all()
+
+        # Format the result as a list of dictionaries
+        resultado = [
+            {
+                "id_reserva": r.id_reserva,
+                "fecha_reserva": r.fecha_reserva.strftime('%Y-%m-%d'),
+                "fecha_entrada": r.fecha_entrada.strftime('%Y-%m-%d'),
+                "fecha_salida": r.fecha_salida.strftime('%Y-%m-%d'),
+                "estado": r.estado,
+                "id_cliente": r.id_cliente,
+                "cliente_nombre": r.cliente_nombre,
+                "cliente_telefono": r.cliente_telefono,
+                "habitacion_numero": r.habitacion_numero,
+                "habitacion_tipo": r.habitacion_tipo
+            }
+            for r in reservas
+        ]
+
+        return jsonify(resultado), 200
+    except Exception as e:
+        logging.error(f"Error al obtener reservas: {e}")
+        return jsonify({"error": "No se pudieron obtener las reservas", "detalles": str(e)}), 500
 
 @app.route("/clientes", methods=["POST"])
 def crear_cliente():
+    """
+    Crea un nuevo cliente en la tabla Clientes.
+    """
     try:
+        # Obtener datos del cuerpo de la solicitud
         data = request.get_json()
+
+        # Crear una nueva instancia de Cliente
         nuevo_cliente = Cliente(
             nombre=data["nombre"],
             apellido=data["apellido"],
@@ -133,10 +168,19 @@ def crear_cliente():
             telefono=data["telefono"],
             documento_identidad=data["documento_identidad"]
         )
+
+        # Agregar el cliente a la base de datos
         db.session.add(nuevo_cliente)
         db.session.commit()
-        return jsonify({"message": "Cliente creado", "id_cliente": nuevo_cliente.id_cliente}), 201
+
+        # Respuesta exitosa
+        return jsonify({
+            "message": "Cliente creado exitosamente",
+            "id_cliente": nuevo_cliente.id_cliente
+        }), 201
+
     except Exception as e:
+        # Manejo de errores
         logging.error(f"Error al crear cliente: {e}")
         return jsonify({"error": "No se pudo crear el cliente", "detalles": str(e)}), 500
 
@@ -154,9 +198,15 @@ def agregar_reserva():
         if not cliente:
             return jsonify({"error": "Cliente no encontrado"}), 404
 
+        # Validar que la habitación existe
+        habitacion = Habitacion.query.get(data["id_habitacion"])
+        if not habitacion:
+            return jsonify({"error": "Habitación no encontrada"}), 404
+
         # Crear una nueva instancia de Reserva
         nueva_reserva = Reserva(
             id_cliente=data["id_cliente"],
+            id_habitacion=data["id_habitacion"],  # Include the room ID
             fecha_entrada=datetime.strptime(data["fecha_entrada"], '%Y-%m-%d'),
             fecha_salida=datetime.strptime(data["fecha_salida"], '%Y-%m-%d'),
             estado=data.get("estado", "Confirmada")  # Valor predeterminado: 'Confirmada'
@@ -187,6 +237,8 @@ def actualizar_reserva(id_reserva):
         data = request.get_json()
         if "id_cliente" in data:
             reserva.id_cliente = data["id_cliente"]
+        if "id_habitacion" in data:
+            reserva.id_habitacion = data["id_habitacion"]
         if "fecha_entrada" in data:
             reserva.fecha_entrada = datetime.strptime(data["fecha_entrada"], '%Y-%m-%d')
         if "fecha_salida" in data:
