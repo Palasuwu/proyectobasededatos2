@@ -3,6 +3,11 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from flask import make_response
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -11,7 +16,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:2604@localhost:5432/hoteldb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:48481012al@localhost:5432/hoteldb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -109,7 +114,7 @@ class Recibo(db.Model):
 # ---------------- ENDPOINTS ----------------
 
 @app.route("/reservas", methods=["GET"])
-def obtener_reservas():
+def listar_reservas():  # Cambié el nombre de la función
     """
     Obtiene todas las reservas junto con la información del cliente y la habitación asociada.
     """
@@ -150,7 +155,27 @@ def obtener_reservas():
     except Exception as e:
         logging.error(f"Error al obtener reservas: {e}")
         return jsonify({"error": "No se pudieron obtener las reservas", "detalles": str(e)}), 500
-
+    
+@app.route("/detalle_reserva", methods=["POST"])
+def agregar_detalle_reserva():
+    """
+    Agrega un nuevo detalle de reserva.
+    """
+    try:
+        data = request.get_json()
+        nuevo_detalle = DetalleReserva(
+            id_reserva=data["id_reserva"],
+            id_habitacion=data["id_habitacion"],
+            precio_por_noche=data["precio_por_noche"],
+            nro_noches=data["nro_noches"]
+        )
+        db.session.add(nuevo_detalle)
+        db.session.commit()
+        return jsonify({"message": "Detalle de reserva agregado exitosamente"}), 201
+    except Exception as e:
+        logging.error(f"Error al agregar detalle de reserva: {e}")
+        return jsonify({"error": "No se pudo agregar el detalle de reserva", "detalles": str(e)}), 500
+    
 @app.route("/clientes", methods=["POST"])
 def crear_cliente():
     """
@@ -310,7 +335,166 @@ def crear_habitacion():
     except Exception as e:
         logging.error(f"Error al crear habitación: {e}")
         return jsonify({"error": "No se pudo crear la habitación", "detalles": str(e)}), 500
+    
+@app.route("/checkin", methods=["POST"])
+def realizar_checkin():
+    """
+    Realiza el check-in de una reserva.
+    """
+    try:
+        data = request.get_json()
+        nuevo_checkin = CheckInCheckOut(
+            id_reserva=data["id_reserva"],
+            fecha_checkin=data["fecha_checkin"]
+        )
+        db.session.add(nuevo_checkin)
+        db.session.commit()
+        return jsonify({"message": "Check-in realizado exitosamente"}), 201
+    except Exception as e:
+        logging.error(f"Error al realizar check-in: {e}")
+        return jsonify({"error": "No se pudo realizar el check-in", "detalles": str(e)}), 500
 
+
+@app.route("/checkout/<int:id_control>", methods=["PUT"])
+def realizar_checkout(id_control):
+    """
+    Realiza el check-out de una reserva.
+    """
+    try:
+        checkin_checkout = CheckInCheckOut.query.get(id_control)
+        if not checkin_checkout:
+            return jsonify({"error": "Registro de check-in/check-out no encontrado"}), 404
+
+        data = request.get_json()
+        checkin_checkout.fecha_checkout = data["fecha_checkout"]
+        db.session.commit()
+        return jsonify({"message": "Check-out realizado exitosamente"}), 200
+    except Exception as e:
+        logging.error(f"Error al realizar check-out: {e}")
+        return jsonify({"error": "No se pudo realizar el check-out", "detalles": str(e)}), 500
+    
+@app.route("/exportar/pdf", methods=["GET"])
+def exportar_pdf():
+    """
+    Exporta las reservas a un archivo PDF.
+    """
+    try:
+        # Obtener las reservas
+        reservas = db.session.query(
+            Reserva.id_reserva,
+            Reserva.fecha_reserva,
+            Reserva.fecha_entrada,
+            Reserva.fecha_salida,
+            Reserva.estado,
+            Cliente.nombre.label("cliente_nombre"),
+            Cliente.apellido.label("cliente_apellido"),
+            Habitacion.numero.label("habitacion_numero")
+        ).join(Cliente, Reserva.id_cliente == Cliente.id_cliente)\
+         .join(Habitacion, Reserva.id_habitacion == Habitacion.id_habitacion).all()
+
+        # Crear un archivo PDF en memoria
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=letter)
+        pdf.setTitle("Reporte de Reservas")
+
+        # Título
+        pdf.setFont("Helvetica-Bold", 16)
+        pdf.drawString(200, 750, "Reporte de Reservas")
+
+        # Encabezados
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(50, 700, "ID Reserva")
+        pdf.drawString(120, 700, "Cliente")
+        pdf.drawString(250, 700, "Habitación")
+        pdf.drawString(350, 700, "Entrada")
+        pdf.drawString(450, 700, "Salida")
+
+        # Datos
+        pdf.setFont("Helvetica", 10)
+        y = 680
+        for r in reservas:
+            pdf.drawString(50, y, str(r.id_reserva))
+            pdf.drawString(120, y, f"{r.cliente_nombre} {r.cliente_apellido}")
+            pdf.drawString(250, y, str(r.habitacion_numero))
+            pdf.drawString(350, y, r.fecha_entrada.strftime('%Y-%m-%d'))
+            pdf.drawString(450, y, r.fecha_salida.strftime('%Y-%m-%d'))
+            y -= 20
+            if y < 50:  # Salto de página
+                pdf.showPage()
+                y = 750
+
+        pdf.save()
+        buffer.seek(0)
+
+        # Enviar el PDF como respuesta
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=reporte_reservas.pdf'
+        return response
+
+    except Exception as e:
+        logging.error(f"Error al exportar a PDF: {e}")
+        return jsonify({"error": "No se pudo exportar el reporte a PDF", "detalles": str(e)}), 500
+    
+@app.route("/exportar/<string:formato>", methods=["GET"])
+def exportar_datos(formato):
+    """
+    Exporta las reservas a un archivo Excel o CSV.
+    """
+    try:
+        # Obtener las reservas
+        reservas = db.session.query(
+            Reserva.id_reserva,
+            Reserva.fecha_reserva,
+            Reserva.fecha_entrada,
+            Reserva.fecha_salida,
+            Reserva.estado,
+            Cliente.nombre.label("cliente_nombre"),
+            Cliente.apellido.label("cliente_apellido"),
+            Habitacion.numero.label("habitacion_numero")
+        ).join(Cliente, Reserva.id_cliente == Cliente.id_cliente)\
+         .join(Habitacion, Reserva.id_habitacion == Habitacion.id_habitacion).all()
+
+        # Convertir los datos a un DataFrame de pandas
+        data = [
+            {
+                "ID Reserva": r.id_reserva,
+                "Cliente": f"{r.cliente_nombre} {r.cliente_apellido}",
+                "Habitación": r.habitacion_numero,
+                "Fecha Entrada": r.fecha_entrada.strftime('%Y-%m-%d'),
+                "Fecha Salida": r.fecha_salida.strftime('%Y-%m-%d'),
+                "Estado": r.estado
+            }
+            for r in reservas
+        ]
+        df = pd.DataFrame(data)
+
+        # Generar el archivo según el formato solicitado
+        if formato == "excel":
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                df.to_excel(writer, index=False, sheet_name="Reservas")
+            output.seek(0)
+            response = make_response(output.getvalue())
+            response.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            response.headers["Content-Disposition"] = "attachment; filename=reporte_reservas.xlsx"
+            return response
+
+        elif formato == "csv":
+            output = BytesIO()
+            df.to_csv(output, index=False)
+            output.seek(0)
+            response = make_response(output.getvalue())
+            response.headers["Content-Type"] = "text/csv"
+            response.headers["Content-Disposition"] = "attachment; filename=reporte_reservas.csv"
+            return response
+
+        else:
+            return jsonify({"error": "Formato no soportado. Use 'excel' o 'csv'."}), 400
+
+    except Exception as e:
+        logging.error(f"Error al exportar datos: {e}")
+        return jsonify({"error": "No se pudo exportar el reporte", "detalles": str(e)}), 500
 # ---------------- MAIN ----------------
 
 def initialize_database():
