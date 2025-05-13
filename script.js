@@ -29,7 +29,24 @@ document.addEventListener("DOMContentLoaded", () => {
     border-radius: 8px; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   `;
-  reservaSection.innerHTML = `<h2 style="text-align:center; color:#333;">Lista de Reservas</h2><div id="reserva-list"></div>`;
+
+  // Add search bar
+  const searchBar = document.createElement("div");
+  searchBar.style = "margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;";
+  searchBar.innerHTML = `
+    <input type="text" id="search-name" placeholder="Buscar por nombre" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <input type="text" id="search-room" placeholder="Buscar por número de habitación" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <select id="search-status" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <option value="">Buscar por estado</option>
+      <option value="Confirmada">Confirmada</option>
+      <option value="Cancelada">Cancelada</option>
+      <option value="Finalizada">Finalizada</option>
+    </select>
+  `;
+  reservaSection.appendChild(searchBar);
+
+  // Add reservation list container
+  reservaSection.innerHTML += `<h2 style="text-align:center; color:#333;">Lista de Reservas</h2><div id="reserva-list"></div>`;
   document.body.appendChild(reservaSection);
 
   // Sección de formulario
@@ -121,7 +138,18 @@ fetch("http://127.0.0.1:5000/clientes")
   // Fetch and render reservations
   fetch(apiURL)
     .then(res => res.json())
-    .then(data => renderReservas(data))
+    .then(data => {
+      renderReservas(data);
+
+      // Add live search functionality
+      const searchName = document.getElementById("search-name");
+      const searchRoom = document.getElementById("search-room");
+      const searchStatus = document.getElementById("search-status");
+
+      [searchName, searchRoom, searchStatus].forEach(input => {
+        input.addEventListener("input", () => filterReservations(data));
+      });
+    })
     .catch(err => alert("Error al cargar reservas: " + err));
 
   // Fetch available rooms and populate the dropdown
@@ -226,6 +254,11 @@ function renderReservas(data) {
 
   data.forEach(r => {
     const div = document.createElement("div");
+    div.classList.add("reserva-item"); // Add a class for filtering
+    div.dataset.clienteNombre = r.cliente_nombre.toLowerCase(); // Store data for filtering
+    div.dataset.habitacionNumero = r.habitacion_numero.toLowerCase();
+    div.dataset.estado = r.estado;
+
     div.style = `
       border: 1px solid #ccc; 
       padding: 10px; 
@@ -234,21 +267,14 @@ function renderReservas(data) {
       background: #f9f9f9;
     `;
 
-    // Create editable fields for reservation details
     div.innerHTML = `
       <p><strong>ID Reserva:</strong> ${r.id_reserva}</p>
-      <p><strong>Cliente:</strong> <input type="text" id="cliente_nombre_${r.id_reserva}" value="${r.cliente_nombre}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Teléfono:</strong> <input type="text" id="cliente_telefono_${r.id_reserva}" value="${r.cliente_telefono}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Habitación:</strong> <input type="text" id="habitacion_numero_${r.id_reserva}" value="${r.habitacion_numero}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Entrada:</strong> <input type="date" id="fecha_entrada_${r.id_reserva}" value="${r.fecha_entrada}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Salida:</strong> <input type="date" id="fecha_salida_${r.id_reserva}" value="${r.fecha_salida}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Estado:</strong> 
-        <select id="estado_${r.id_reserva}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled>
-          <option value="Confirmada" ${r.estado === "Confirmada" ? "selected" : ""}>Confirmada</option>
-          <option value="Cancelada" ${r.estado === "Cancelada" ? "selected" : ""}>Cancelada</option>
-          <option value="Finalizada" ${r.estado === "Finalizada" ? "selected" : ""}>Finalizada</option>
-        </select>
-      </p>
+      <p><strong>Cliente:</strong> ${r.cliente_nombre}</p>
+      <p><strong>Teléfono:</strong> ${r.cliente_telefono}</p>
+      <p><strong>Habitación:</strong> ${r.habitacion_numero} (${r.habitacion_tipo})</p>
+      <p><strong>Entrada:</strong> ${r.fecha_entrada}</p>
+      <p><strong>Salida:</strong> ${r.fecha_salida}</p>
+      <p><strong>Estado:</strong> ${r.estado}</p>
     `;
 
     // Add Edit button
@@ -264,63 +290,13 @@ function renderReservas(data) {
       cursor: pointer;
     `;
     editBtn.onclick = () => {
-      // Enable editing for the fields
-      document.getElementById(`cliente_nombre_${r.id_reserva}`).disabled = false;
-      document.getElementById(`cliente_telefono_${r.id_reserva}`).disabled = false;
-      document.getElementById(`habitacion_numero_${r.id_reserva}`).disabled = false;
-      document.getElementById(`fecha_entrada_${r.id_reserva}`).disabled = false;
-      document.getElementById(`fecha_salida_${r.id_reserva}`).disabled = false;
-      document.getElementById(`estado_${r.id_reserva}`).disabled = false;
-
-      // Show the Update button
-      updateBtn.style.display = "inline-block";
-      editBtn.style.display = "none";
-    };
-
-    // Add Update button
-    const updateBtn = document.createElement("button");
-    updateBtn.innerText = "Actualizar";
-    updateBtn.style = `
-      margin-right: 10px; 
-      padding: 5px 10px; 
-      background: #4CAF50; 
-      color: white; 
-      border: none; 
-      border-radius: 4px; 
-      cursor: pointer;
-      display: none;
-    `;
-    updateBtn.onclick = () => {
-      // Collect updated data
-      const updatedData = {
-        cliente_nombre: document.getElementById(`cliente_nombre_${r.id_reserva}`).value,
-        cliente_telefono: document.getElementById(`cliente_telefono_${r.id_reserva}`).value,
-        habitacion_numero: document.getElementById(`habitacion_numero_${r.id_reserva}`).value,
-        fecha_entrada: document.getElementById(`fecha_entrada_${r.id_reserva}`).value,
-        fecha_salida: document.getElementById(`fecha_salida_${r.id_reserva}`).value,
-        estado: document.getElementById(`estado_${r.id_reserva}`).value,
-      };
-
-      // Send the updated data to the backend
-      fetch(`${apiURL}/${r.id_reserva}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedData),
-      })
-        .then(res => res.json())
-        .then(response => {
-          if (response.error) {
-            console.error("Error response:", response);
-            alert("Error: " + response.detalles);
-          } else {
-            alert("Reserva actualizada exitosamente");
-            return fetch(apiURL).then(res => res.json()).then(renderReservas);
-          }
-        })
-        .catch(err => {
-          console.error("Fetch error:", err);
-          alert("Error al actualizar reserva: " + err);
-        });
+      document.getElementById("id_cliente").value = r.id_cliente;
+      document.getElementById("id_habitacion").value = r.id_habitacion;
+      document.getElementById("fecha_entrada").value = r.fecha_entrada;
+      document.getElementById("fecha_salida").value = r.fecha_salida;
+      document.getElementById("estado").value = r.estado;
+      editingReservaId = r.id_reserva;
+      alert("Puedes editar la reserva en el formulario de registro.");
     };
 
     // Add Delete button
@@ -347,10 +323,29 @@ function renderReservas(data) {
 
     // Append buttons to the reservation card
     div.appendChild(editBtn);
-    div.appendChild(updateBtn);
     div.appendChild(deleteBtn);
 
     // Append the reservation card to the list
     list.appendChild(div);
+  });
+}
+
+function filterReservations(data) {
+  const searchName = document.getElementById("search-name").value.toLowerCase();
+  const searchRoom = document.getElementById("search-room").value.toLowerCase();
+  const searchStatus = document.getElementById("search-status").value;
+
+  const reservations = document.querySelectorAll(".reserva-item");
+
+  reservations.forEach(reserva => {
+    const matchesName = reserva.dataset.clienteNombre.includes(searchName);
+    const matchesRoom = reserva.dataset.habitacionNumero.includes(searchRoom);
+    const matchesStatus = !searchStatus || reserva.dataset.estado === searchStatus;
+
+    if (matchesName && matchesRoom && matchesStatus) {
+      reserva.style.display = "block";
+    } else {
+      reserva.style.display = "none";
+    }
   });
 }
