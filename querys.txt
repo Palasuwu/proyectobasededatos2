@@ -1,3 +1,5 @@
+CREATE DATABASE hoteldb;
+
 -- Tabla Clientes
 CREATE TABLE Clientes (
     id_cliente SERIAL PRIMARY KEY,
