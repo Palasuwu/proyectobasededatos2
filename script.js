@@ -17,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
   title.style.color = "white";
   document.body.appendChild(title);
 
+
+
   // Sección de reservas
   const reservaSection = document.createElement("section");
   reservaSection.id = "reserva-section";
@@ -30,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   `;
 
-  // Add search bar
+   // Add search bar
   const searchBar = document.createElement("div");
   searchBar.style = "margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;";
   searchBar.innerHTML = `
@@ -90,6 +92,17 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
   formSection.appendChild(form);
   document.body.appendChild(formSection);
+
+  // Botones para exportar reportes
+const reportButtons = document.createElement("div");
+reportButtons.id = "report-buttons";
+reportButtons.style = "margin: 20px; text-align: center;";
+reportButtons.innerHTML = `
+  <button id="download-pdf" style="padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Descargar PDF</button>
+  <button id="download-excel" style="padding: 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Descargar Excel</button>
+  <button id="download-csv" style="padding: 10px; background: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer;">Descargar CSV</button>
+`;
+document.body.appendChild(reportButtons);
 
   // Fetch cientes disponibles y llenar el dropdown
 fetch("http://127.0.0.1:5000/clientes")
@@ -269,21 +282,15 @@ function renderReservas(data) {
 
     // Create editable fields for reservation details
     div.innerHTML = `
-      <p><strong>ID Reserva:</strong> ${r.id_reserva}</p>
-      <p><strong>Cliente:</strong> <input type="text" id="cliente_nombre_${r.id_reserva}" value="${r.cliente_nombre}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Teléfono:</strong> <input type="text" id="cliente_telefono_${r.id_reserva}" value="${r.cliente_telefono}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Habitación:</strong> <input type="text" id="habitacion_numero_${r.id_reserva}" value="${r.habitacion_numero}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Entrada:</strong> <input type="date" id="fecha_entrada_${r.id_reserva}" value="${r.fecha_entrada}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Salida:</strong> <input type="date" id="fecha_salida_${r.id_reserva}" value="${r.fecha_salida}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
-      <p><strong>Estado:</strong> 
-        <select id="estado_${r.id_reserva}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled>
-          <option value="Confirmada" ${r.estado === "Confirmada" ? "selected" : ""}>Confirmada</option>
-          <option value="Cancelada" ${r.estado === "Cancelada" ? "selected" : ""}>Cancelada</option>
-          <option value="Finalizada" ${r.estado === "Finalizada" ? "selected" : ""}>Finalizada</option>
-        </select>
-      </p>
-    `;
-
+  <p><strong>ID Reserva:</strong> ${r.id_reserva}</p>
+  <p><strong>Cliente:</strong> ${r.cliente_nombre}</p>
+  <p><strong>Teléfono:</strong> ${r.cliente_telefono}</p>
+  <p><strong>Habitación:</strong> ${r.habitacion_numero}</p>
+  <p><strong>Entrada:</strong> ${r.fecha_entrada}</p>
+  <p><strong>Salida:</strong> ${r.fecha_salida}</p>
+  <p><strong>Estado:</strong> ${r.estado}</p>
+  <p><strong>Subtotal:</strong> $${(r.subtotal || 0).toFixed(2)}</p>
+`;
     // Add Edit button
     const editBtn = document.createElement("button");
     editBtn.innerText = "Editar";
@@ -407,3 +414,65 @@ function filterReservations(data) {
     }
   });
 }
+document.getElementById("download-pdf").addEventListener("click", () => {
+  fetch("http://127.0.0.1:5000/exportar/pdf")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Error al descargar el PDF");
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = "reporte_reservas.pdf";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(err => alert(err.message));
+});
+
+document.getElementById("download-excel").addEventListener("click", () => {
+  fetch("http://127.0.0.1:5000/exportar/excel")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Error al descargar el archivo Excel");
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = "reporte_reservas.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(err => alert(err.message));
+});
+
+document.getElementById("download-csv").addEventListener("click", () => {
+  fetch("http://127.0.0.1:5000/exportar/csv")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Error al descargar el archivo CSV");
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = "reporte_reservas.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(err => alert(err.message));
+});
