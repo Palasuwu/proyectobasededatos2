@@ -63,6 +63,11 @@ pg_config executable not found.
 ###En Windows
 ```pip install flask flask_sqlalchemy psycopg2-binary```
 
+### para generar pdf excel y csv
+```pip install reportlab```
+```pip install pandas openpyxl```
+
+
 
 
 
