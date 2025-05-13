@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   searchBar.style = "margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;";
   searchBar.innerHTML = `
     <input type="text" id="search-name" placeholder="Buscar por nombre" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-    <input type="text" id="search-room" placeholder="Buscar por número de habitación" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <input type="text" id="search-room" placeholder="Buscar por habitación" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
     <select id="search-status" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
       <option value="">Buscar por estado</option>
       <option value="Confirmada">Confirmada</option>
