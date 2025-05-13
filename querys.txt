@@ -135,3 +135,7 @@ VALUES
 ('107', 'Suite', 4, 160.00, 'Disponible'),
 ('108', 'Familiar', 6, 210.00, 'Ocupada');
 
+
+ALTER TABLE Reservas
+ADD COLUMN id_habitacion INT,
+ADD CONSTRAINT fk_habitacion FOREIGN KEY (id_habitacion) REFERENCES Habitaciones(id_habitacion);
