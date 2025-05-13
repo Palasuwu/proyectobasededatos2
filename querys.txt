@@ -1,15 +1,11 @@
-CREATE DATABASE hoteldb;
-
-select current_database (); 
-
 -- Tabla Clientes
 CREATE TABLE Clientes (
     id_cliente SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(100) UNIQUE NOT NULL,
-    telefono VARCHAR(20) NOT NULL,
-    documento_identidad VARCHAR(50) UNIQUE NOT NULL,
+    telefono VARCHAR(200) NOT NULL,
+    documento_identidad VARCHAR(500) UNIQUE NOT NULL,
     fecha_registro DATE DEFAULT CURRENT_DATE
 );
 
@@ -17,10 +13,10 @@ CREATE TABLE Clientes (
 CREATE TABLE Habitaciones (
     id_habitacion SERIAL PRIMARY KEY,
     numero VARCHAR(10) UNIQUE NOT NULL,
-    tipo VARCHAR(50) NOT NULL,
+    tipo VARCHAR(500) NOT NULL,
     capacidad INT NOT NULL CHECK (capacidad > 0),
     precio_noche NUMERIC(10,2) NOT NULL CHECK (precio_noche >= 0),
-    estado VARCHAR(20) NOT NULL CHECK (estado IN ('Disponible', 'Ocupada', 'Mantenimiento'))
+    estado VARCHAR(200) NOT NULL CHECK (estado IN ('Disponible', 'Ocupada', 'Mantenimiento'))
 );
 
 -- Tabla Reservas
@@ -30,7 +26,7 @@ CREATE TABLE Reservas (
     fecha_reserva DATE NOT NULL DEFAULT CURRENT_DATE,
     fecha_entrada DATE NOT NULL,
     fecha_salida DATE NOT NULL,
-    estado VARCHAR(20) DEFAULT 'Confirmada' CHECK (estado IN ('Confirmada', 'Cancelada', 'Finalizada')),
+    estado VARCHAR(200) DEFAULT 'Confirmada' CHECK (estado IN ('Confirmada', 'Cancelada', 'Finalizada')),
     FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente)
 );
 
@@ -55,15 +51,15 @@ CREATE TABLE Pagos (
     id_reserva INT NOT NULL,
     fecha_pago DATE NOT NULL,
     monto NUMERIC(10,2) NOT NULL CHECK (monto >= 0),
-    metodo_pago VARCHAR(20) NOT NULL CHECK (metodo_pago IN ('Efectivo', 'Tarjeta', 'Transferencia')),
-    estado_pago VARCHAR(20) DEFAULT 'Pendiente' CHECK (estado_pago IN ('Pagado', 'Pendiente', 'Reembolsado')),
+    metodo_pago VARCHAR(200) NOT NULL CHECK (metodo_pago IN ('Efectivo', 'Tarjeta', 'Transferencia')),
+    estado_pago VARCHAR(200) DEFAULT 'Pendiente' CHECK (estado_pago IN ('Pagado', 'Pendiente', 'Reembolsado')),
     FOREIGN KEY (id_reserva) REFERENCES Reservas(id_reserva)
 );
 
 -- Tabla Servicios_Hotel
 CREATE TABLE Servicios_Hotel (
     id_servicio SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
     precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0)
 );
@@ -71,9 +67,9 @@ CREATE TABLE Servicios_Hotel (
 -- Tabla Servicios_Exterior
 CREATE TABLE Servicios_Exterior (
     id_servicio SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
-    proveedor VARCHAR(100),
+    proveedor VARCHAR(200),
     precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0)
 );
 
@@ -82,7 +78,7 @@ CREATE TABLE Servicios_Reserva (
     id_servicio_reserva SERIAL PRIMARY KEY,
     id_reserva INT NOT NULL,
     id_servicio INT NOT NULL,
-    tipo_servicio VARCHAR(10) NOT NULL CHECK (tipo_servicio IN ('hotel','exterior')),
+    tipo_servicio VARCHAR(200) NOT NULL CHECK (tipo_servicio IN ('hotel','exterior')),
     cantidad INT NOT NULL CHECK (cantidad > 0),
     precio_unitario NUMERIC(10,2) NOT NULL,
     subtotal NUMERIC(10,2) NOT NULL,
@@ -112,30 +108,482 @@ CREATE TABLE Recibos (
     UNIQUE (id_pago)
 );
 
-Select * from Clientes ;
-Select * from Reservas ;
-
-
-INSERT INTO Reservas (id_cliente, fecha_reserva, fecha_entrada, fecha_salida, estado)
-VALUES (1, CURRENT_DATE, '2025-05-10', '2025-05-15', 'Confirmada');
-
-INSERT INTO Clientes (nombre, apellido, correo, telefono, documento_identidad)
-VALUES ('John', 'Doe', 'john.doe@example.com', '1234567890', '123456789');
-
-
--- Insert sample rooms into the Habitaciones table
-INSERT INTO Habitaciones (numero, tipo, capacidad, precio_noche, estado)
-VALUES 
-('101', 'Individual', 1, 50.00, 'Disponible'),
-('102', 'Doble', 2, 75.00, 'Disponible'),
-('103', 'Suite', 4, 150.00, 'Ocupada'),
-('104', 'Familiar', 6, 200.00, 'Disponible'),
-('105', 'Individual', 1, 55.00, 'Mantenimiento'),
-('106', 'Doble', 2, 80.00, 'Disponible'),
-('107', 'Suite', 4, 160.00, 'Disponible'),
-('108', 'Familiar', 6, 210.00, 'Ocupada');
-
-
 ALTER TABLE Reservas
 ADD COLUMN id_habitacion INT,
 ADD CONSTRAINT fk_habitacion FOREIGN KEY (id_habitacion) REFERENCES Habitaciones(id_habitacion);
+
+--Clientes
+INSERT INTO Clientes (nombre, apellido, correo, telefono, documento_identidad, fecha_registro) 
+VALUES 
+('Jennifer', 'Rodriguez', 'jennifer.rodriguez@example.com', '855.103.3744', 'DNI0000', '2024-06-10'),
+('Sara', 'Davis', 'sara.davis1@example.com', '963-562-3437x5469', 'DNI0001', '2023-08-20'),
+('Mariah', 'Wilson', 'mariah.wilson2@example.com', '(873)556-4564x174', 'DNI0002', '2023-08-13'),
+('Sean', 'Cooper', 'sean.cooper3@example.com', '257.316.6787', 'DNI0003', '2025-05-07'),
+('Tiffany', 'Knight', 'tiffany.knight4@example.com', '+1-368-473-5801x756', 'DNI0004', '2025-04-03'),
+('Stephanie', 'Hoover', 'stephanie.hoover5@example.com', '(090)614-3521x25030', 'DNI0005', '2023-05-18'),
+('Patrick', 'Smith', 'patrick.smith6@example.com', '993-173-0896', 'DNI0006', '2023-07-02'),
+('Amanda', 'Howe', 'amanda.howe7@example.com', '667.063.6094', 'DNI0007', '2023-06-03'),
+('Brandi', 'Padilla', 'brandi.padilla8@example.com', '729-814-1140x29263', 'DNI0008', '2024-07-30'),
+('Theresa', 'Flores', 'theresa.flores9@example.com', '(881)817-1877x27852', 'DNI0009', '2024-03-30'),
+('Jonathan', 'Miller', 'jonathan.miller10@example.com', '537.357.6070x86736', 'DNI0010', '2023-11-15'),
+('Jon', 'Alvarez', 'jon.alvarez11@example.com', '745.792.8134', 'DNI0011', '2025-05-05'),
+('April', 'Nunez', 'april.nunez12@example.com', '2505927636', 'DNI0012', '2024-05-31'),
+('James', 'Myers', 'james.myers13@example.com', '001-583-528-8996x29793', 'DNI0013', '2024-08-18'),
+('Scott', 'Sanchez', 'scott.sanchez14@example.com', '+1-583-000-2379x318', 'DNI0014', '2024-04-06'),
+('Sandy', 'Walters', 'sandy.walters15@example.com', '573-258-5767x5712', 'DNI0015', '2023-10-29'),
+('Karen', 'Walton', 'karen.walton16@example.com', '(783)500-6316x9968', 'DNI0016', '2023-10-22'),
+('Cynthia', 'Yu', 'cynthia.yu17@example.com', '+1-287-468-8119x70369', 'DNI0017', '2024-12-20'),
+('Michael', 'Miller', 'michael.miller18@example.com', '3909852741', 'DNI0018', '2024-08-14'),
+('Sergio', 'Humphrey', 'sergio.humphrey19@example.com', '668.539.4102', 'DNI0019', '2024-01-12'),
+('Courtney', 'Elliott', 'courtney.elliott20@example.com', '876-560-1692', 'DNI0020', '2024-12-23'),
+('Donald', 'Johnson', 'donald.johnson21@example.com', '001-630-446-1545x938', 'DNI0021', '2024-07-05'),
+('Brian', 'Robertson', 'brian.robertson22@example.com', '2704525198', 'DNI0022', '2024-03-31'),
+('Stephanie', 'Chang', 'stephanie.chang23@example.com', '918-192-7083x518', 'DNI0023', '2025-02-19'),
+('Jasmine', 'Cowan', 'jasmine.cowan24@example.com', '001-363-975-2458x337', 'DNI0024', '2025-02-13'),
+('Lee', 'Anderson', 'lee.anderson25@example.com', '+1-015-450-1904', 'DNI0025', '2025-01-24'),
+('Danny', 'Joseph', 'danny.joseph26@example.com', '885.716.8861', 'DNI0026', '2023-07-13'),
+('Brittney', 'Ford', 'brittney.ford27@example.com', '243-640-0041x55840', 'DNI0027', '2025-01-09'),
+('Jeanette', 'Atkinson', 'jeanette.atkinson28@example.com', '001-824-906-6493x458', 'DNI0028', '2024-05-26'),
+('Pamela', 'Erickson', 'pamela.erickson29@example.com', '(528)037-6031x41227', 'DNI0029', '2023-05-23'),
+('Patricia', 'Cox', 'patricia.cox30@example.com', '(183)744-6670x28533', 'DNI0030', '2023-09-06'),
+('Jeffrey', 'Turner', 'jeffrey.turner31@example.com', '(284)802-3623', 'DNI0031', '2024-12-20'),
+('Ann', 'Ibarra', 'ann.ibarra32@example.com', '001-238-407-3062', 'DNI0032', '2024-03-02'),
+('William', 'Lewis', 'william.lewis33@example.com', '+1-871-218-0103', 'DNI0033', '2024-12-11'),
+('Randy', 'Craig', 'randy.craig34@example.com', '(564)129-3300x81737', 'DNI0034', '2024-11-13'),
+('Kimberly', 'Juarez', 'kimberly.juarez35@example.com', '(984)092-5554', 'DNI0035', '2024-06-04'),
+('Darlene', 'King', 'darlene.king36@example.com', '7396574727', 'DNI0036', '2025-02-05'),
+('Kenneth', 'Stokes', 'kenneth.stokes37@example.com', '596-696-8493x36348', 'DNI0037', '2023-09-19'),
+('William', 'Morton', 'william.morton38@example.com', '887.546.4780x34710', 'DNI0038', '2023-10-15'),
+('Carla', 'Foley', 'carla.foley39@example.com', '3292594000', 'DNI0039', '2024-08-25'),
+('Sabrina', 'Jackson', 'sabrina.jackson40@example.com', '367-551-9610x2098', 'DNI0040', '2023-12-09'),
+('Michael', 'Clark', 'michael.clark41@example.com', '(352)272-9986x9300', 'DNI0041', '2024-04-14'),
+('Phyllis', 'Johnson', 'phyllis.johnson42@example.com', '+1-281-645-9305x2547', 'DNI0042', '2024-05-19'),
+('Chelsea', 'Rivera', 'chelsea.rivera43@example.com', '+1-172-184-8697x6296', 'DNI0043', '2024-12-27'),
+('David', 'Sandoval', 'david.sandoval44@example.com', '001-191-274-1644x15881', 'DNI0044', '2023-05-18'),
+('Blake', 'Smith', 'blake.smith45@example.com', '001-216-670-5216x93036', 'DNI0045', '2025-04-21'),
+('Samantha', 'Johnson', 'samantha.johnson46@example.com', '+1-628-466-8078x282', 'DNI0046', '2024-09-23'),
+('Jared', 'Sosa', 'jared.sosa47@example.com', '974-443-6008', 'DNI0047', '2025-01-02'),
+('Kimberly', 'Walter', 'kimberly.walter48@example.com', '+1-422-821-5052x5911', 'DNI0048', '2024-02-25'),
+('Jamie', 'Hayes', 'jamie.hayes49@example.com', '+1-778-811-5766x87868', 'DNI0049', '2023-07-08'),
+('Rebecca', 'Thomas', 'rebecca.thomas50@example.com', '(852)122-0691x1849', 'DNI0050', '2024-01-02'),
+('Michael', 'Wade', 'michael.wade51@example.com', '001-769-597-8538x0655', 'DNI0051', '2025-01-16'),
+('William', 'Wright', 'william.wright52@example.com', '715-693-8088', 'DNI0052', '2023-08-06'),
+('Terri', 'Hudson', 'terri.hudson53@example.com', '5254776037', 'DNI0053', '2024-12-08'),
+('Jessica', 'Cooper', 'jessica.cooper54@example.com', '001-207-826-4973x0799', 'DNI0054', '2025-02-11'),
+('Theresa', 'Thompson', 'theresa.thompson55@example.com', '595.692.8663x564', 'DNI0055', '2023-11-14'),
+('Jason', 'Estes', 'jason.estes56@example.com', '+1-957-395-9253', 'DNI0056', '2023-08-31'),
+('Megan', 'Scott', 'megan.scott57@example.com', '(891)773-2959', 'DNI0057', '2023-11-21'),
+('Jennifer', 'Davis', 'jennifer.davis58@example.com', '346.483.5650x0339', 'DNI0058', '2025-02-15'),
+('Frank', 'Grant', 'frank.grant59@example.com', '484-765-6010', 'DNI0059', '2024-01-26'),
+('Tonya', 'Hines', 'tonya.hines60@example.com', '+1-874-867-5311x180', 'DNI0060', '2025-03-05'),
+('Donna', 'Palmer', 'donna.palmer61@example.com', '001-919-300-1419x6299', 'DNI0061', '2024-06-27'),
+('Susan', 'Ibarra', 'susan.ibarra62@example.com', '422-932-2347x429', 'DNI0062', '2023-12-08'),
+('James', 'Taylor', 'james.taylor63@example.com', '+1-623-905-8724x19493', 'DNI0063', '2023-05-15'),
+('Patricia', 'Holloway', 'patricia.holloway64@example.com', '001-906-227-8085x3275', 'DNI0064', '2024-10-08'),
+('Nicole', 'Hall', 'nicole.hall65@example.com', '+1-431-574-5894x3486', 'DNI0065', '2023-07-01'),
+('Gregory', 'Wilson', 'gregory.wilson66@example.com', '001-182-726-4832', 'DNI0066', '2024-12-06'),
+('Casey', 'Alexander', 'casey.alexander67@example.com', '680-566-8289x20497', 'DNI0067', '2024-06-15'),
+('Kathleen', 'Hinton', 'kathleen.hinton68@example.com', '736.118.6187', 'DNI0068', '2024-12-14'),
+('Denise', 'Johnson', 'denise.johnson69@example.com', '319.661.8383', 'DNI0069', '2023-10-28'),
+('Travis', 'Lee', 'travis.lee70@example.com', '829-389-8969', 'DNI0070', '2024-03-13'),
+('Michelle', 'Durham', 'michelle.durham71@example.com', '+1-790-553-0373x83023', 'DNI0071', '2024-04-28'),
+('Thomas', 'Munoz', 'thomas.munoz72@example.com', '+1-465-419-1759x9132', 'DNI0072', '2024-03-24'),
+('Sandra', 'Allen', 'sandra.allen73@example.com', '7428521855', 'DNI0073', '2024-10-23'),
+('Jenny', 'Ward', 'jenny.ward74@example.com', '348.666.0271', 'DNI0074', '2023-12-21'),
+('Crystal', 'Moore', 'crystal.moore75@example.com', '975.292.9643', 'DNI0075', '2023-08-10'),
+('Shelly', 'Taylor', 'shelly.taylor76@example.com', '+1-620-479-1511', 'DNI0076', '2024-05-29'),
+('John', 'Williams', 'john.williams77@example.com', '001-917-494-8623x198', 'DNI0077', '2023-09-13'),
+('Stephanie', 'Santos', 'stephanie.santos78@example.com', '+1-303-292-2992x1141', 'DNI0078', '2023-12-07'),
+('Cindy', 'Ray', 'cindy.ray79@example.com', '960-127-0554x660', 'DNI0079', '2023-12-28'),
+('Denise', 'Lewis', 'denise.lewis80@example.com', '923-837-5046', 'DNI0080', '2024-08-03'),
+('April', 'Krause', 'april.krause81@example.com', '001-598-634-1743x441', 'DNI0081', '2024-02-21'),
+('Dustin', 'Johnson', 'dustin.johnson82@example.com', '+1-704-896-7998x3204', 'DNI0082', '2023-08-03'),
+('Mary', 'Zimmerman', 'mary.zimmerman83@example.com', '774.862.9742', 'DNI0083', '2024-11-01'),
+('Alexis', 'Morgan', 'alexis.morgan84@example.com', '001-106-459-3562x135', 'DNI0084', '2024-12-23'),
+('Jennifer', 'Kennedy', 'jennifer.kennedy85@example.com', '(566)659-1187', 'DNI0085', '2023-08-21'),
+('Cody', 'Herring', 'cody.herring86@example.com', '673.616.0492x44818', 'DNI0086', '2024-10-12'),
+('Erica', 'Smith', 'erica.smith87@example.com', '(015)573-3597', 'DNI0087', '2023-12-01'),
+('Amy', 'Pineda', 'amy.pineda88@example.com', '(010)153-4818x4118', 'DNI0088', '2024-09-01'),
+('Keith', 'Brown', 'keith.brown89@example.com', '272-274-2790', 'DNI0089', '2024-07-20'),
+('Nicholas', 'Yu', 'nicholas.yu90@example.com', '416-346-3798', 'DNI0090', '2024-07-19'),
+('Mary', 'Lopez', 'mary.lopez91@example.com', '+1-096-934-5857x7454', 'DNI0091', '2025-01-03'),
+('Frank', 'Koch', 'frank.koch92@example.com', '505.794.3017x823', 'DNI0092', '2025-02-04'),
+('Paul', 'Graves', 'paul.graves93@example.com', '820-767-7503x93172', 'DNI0093', '2024-10-05'),
+('Christopher', 'Stone', 'christopher.stone94@example.com', '+1-869-431-6087x50394', 'DNI0094', '2025-02-16'),
+('Kathy', 'Clay', 'kathy.clay95@example.com', '(784)101-5666x34768', 'DNI0095', '2023-05-12'),
+('Courtney', 'Reid', 'courtney.reid96@example.com', '+1-726-669-9478x54692', 'DNI0096', '2024-02-05'),
+('Benjamin', 'Gonzales', 'benjamin.gonzales97@example.com', '413.536.0952x271', 'DNI0097', '2025-01-03'),
+('Cory', 'Hahn', 'cory.hahn98@example.com', '3208662467', 'DNI0098', '2024-01-08'),
+('Susan', 'Johnson', 'susan.johnson99@example.com', '211.744.4609x4571', 'DNI0099', '2023-06-27');
+
+Select * FROM Pagos;
+--Habitaciones 
+INSERT INTO Habitaciones (numero, tipo, capacidad, precio_noche, estado)
+VALUES 
+ ('H001', 'Doble', 2, 385.34, 'Disponible'),
+ ('H002', 'Simple', 2, 61.5, 'Disponible'),
+ ('H003', 'Doble', 4, 449.85, 'Disponible'),
+ ('H004', 'Simple', 1, 359.1, 'Disponible'),
+ ('H005', 'Simple', 4, 52.89, 'Disponible'),
+ ('H006', 'Simple', 1, 329.39, 'Disponible'),
+ ('H007', 'Doble', 3, 377.19, 'Disponible'),
+ ('H008', 'Simple', 2, 388.23, 'Disponible'),
+ ('H009', 'Doble', 2, 97.46, 'Disponible'),
+ ('H010', 'Doble', 3, 222.86, 'Disponible'),
+ ('H011', 'Doble', 4, 341.6, 'Disponible'),
+ ('H012', 'Suite', 4, 116.61, 'Disponible'),
+ ('H013', 'Suite', 2, 285.87, 'Disponible'),
+ ('H014', 'Simple', 2, 459.68, 'Disponible'),
+ ('H015', 'Doble', 3, 405.2, 'Disponible'),
+ ('H016', 'Doble', 4, 413.08, 'Disponible'),
+ ('H017', 'Doble', 2, 408.01, 'Disponible'),
+ ('H018', 'Doble', 2, 313.94, 'Disponible'),
+ ('H019', 'Simple', 4, 64.98, 'Disponible'),
+ ('H020', 'Suite', 1, 441.95, 'Disponible'),
+ ('H021', 'Doble', 1, 384.42, 'Disponible'),
+ ('H022', 'Suite', 2, 154.88, 'Disponible'),
+ ('H023', 'Doble', 1, 367.22, 'Disponible'),
+ ('H024', 'Suite', 3, 397.14, 'Disponible'),
+ ('H025', 'Doble', 4, 256.23, 'Disponible'),
+ ('H026', 'Suite', 4, 311.43, 'Disponible'),
+ ('H027', 'Doble', 3, 366.85, 'Disponible'),
+ ('H028', 'Simple', 3, 169.64, 'Disponible'),
+ ('H029', 'Simple', 1, 123.29, 'Disponible'),
+ ('H030', 'Simple', 3, 344.58, 'Disponible'),
+ ('H031', 'Simple', 1, 404.01, 'Disponible'),
+ ('H032', 'Suite', 2, 486.8, 'Disponible'),
+ ('H033', 'Doble', 2, 254.17, 'Disponible'),
+ ('H034', 'Doble', 1, 322.86, 'Disponible'),
+ ('H035', 'Simple', 3, 195.32, 'Disponible'),
+ ('H036', 'Doble', 3, 164.97, 'Disponible'),
+ ('H037', 'Suite', 1, 135.56, 'Disponible'),
+ ('H038', 'Simple', 2, 441.48, 'Disponible'),
+ ('H039', 'Doble', 2, 426.78, 'Disponible'),
+ ('H040', 'Doble', 3, 190.5, 'Disponible'),
+ ('H041', 'Doble', 3, 266.94, 'Disponible'),
+ ('H042', 'Suite', 2, 70.03, 'Disponible'),
+ ('H043', 'Suite', 1, 54.14, 'Disponible'),
+ ('H044', 'Doble', 4, 71.36, 'Disponible'),
+ ('H045', 'Doble', 4, 257.23, 'Disponible'),
+ ('H046', 'Simple', 1, 86.66, 'Disponible'),
+ ('H047', 'Simple', 2, 236.31, 'Disponible'),
+ ('H048', 'Simple', 4, 325.74, 'Disponible'),
+ ('H049', 'Doble', 4, 67.71, 'Disponible'),
+ ('H050', 'Simple', 2, 270.51, 'Disponible'),
+ ('H051', 'Simple', 3, 470.51, 'Disponible'),
+ ('H052', 'Doble', 4, 98.28, 'Disponible'),
+ ('H053', 'Doble', 2, 369.98, 'Disponible'),
+ ('H054', 'Doble', 4, 291.27, 'Disponible'),
+ ('H055', 'Doble', 3, 154.3, 'Disponible'),
+ ('H056', 'Simple', 1, 127.66, 'Disponible'),
+ ('H057', 'Doble', 2, 148.13, 'Disponible'),
+ ('H058', 'Suite', 1, 383.86, 'Disponible'),
+ ('H059', 'Suite', 4, 436.59, 'Disponible'),
+ ('H060', 'Simple', 4, 340.34, 'Disponible'),
+ ('H061', 'Simple', 3, 153.3, 'Disponible'),
+ ('H062', 'Suite', 3, 149.7, 'Disponible'),
+ ('H063', 'Simple', 1, 283.17, 'Disponible'),
+ ('H064', 'Suite', 3, 155.12, 'Disponible'),
+ ('H065', 'Suite', 4, 179.07, 'Disponible'),
+ ('H066', 'Simple', 2, 414.39, 'Disponible'),
+ ('H067', 'Suite', 3, 215.14, 'Disponible'),
+ ('H068', 'Suite', 1, 415.4, 'Disponible'),
+ ('H069', 'Doble', 2, 489.09, 'Disponible'),
+ ('H070', 'Suite', 1, 111.01, 'Disponible'),
+ ('H071', 'Simple', 4, 306.27, 'Disponible'),
+ ('H072', 'Suite', 2, 155.89, 'Disponible'),
+ ('H073', 'Simple', 2, 391.98, 'Disponible'),
+ ('H074', 'Doble', 2, 333.05, 'Disponible'),
+ ('H075', 'Simple', 1, 286.9, 'Disponible'),
+ ('H076', 'Doble', 4, 255.02, 'Disponible'),
+ ('H077', 'Simple', 2, 299.99, 'Disponible'),
+ ('H078', 'Simple', 4, 414.16, 'Disponible'),
+ ('H079', 'Suite', 4, 295.71, 'Disponible'),
+ ('H080', 'Suite', 1, 166.62, 'Disponible'),
+ ('H081', 'Suite', 4, 366.54, 'Disponible'),
+ ('H082', 'Doble', 3, 222.84, 'Disponible'),
+ ('H083', 'Simple', 2, 67.23, 'Disponible'),
+ ('H084', 'Suite', 2, 204.42, 'Disponible'),
+ ('H085', 'Doble', 2, 167.05, 'Disponible'),
+ ('H086', 'Suite', 2, 187.21, 'Disponible'),
+ ('H087', 'Doble', 1, 379.54, 'Disponible'),
+ ('H088', 'Simple', 3, 59.89, 'Disponible'),
+ ('H089', 'Suite', 1, 61.05, 'Disponible'),
+ ('H090', 'Simple', 1, 151.6, 'Disponible'),
+ ('H091', 'Suite', 3, 79.95, 'Disponible'),
+ ('H092', 'Simple', 3, 487.44, 'Disponible'),
+ ('H093', 'Doble', 2, 451.59, 'Disponible'),
+ ('H094', 'Simple', 4, 245.85, 'Disponible'),
+ ('H095', 'Doble', 3, 129.62, 'Disponible'),
+ ('H096', 'Doble', 4, 222.2, 'Disponible'),
+ ('H097', 'Doble', 3, 290.17, 'Disponible'),
+ ('H098', 'Suite', 4, 391.59, 'Disponible'),
+ ('H099', 'Suite', 1, 234.02, 'Disponible'),
+ ('H100', 'Doble', 2, 51.4, 'Disponible');
+
+
+ --REserva
+ INSERT INTO Reservas (id_cliente, fecha_reserva, fecha_entrada, fecha_salida, estado)
+VALUES 
+(18, '2025-03-04', '2025-03-24', '2025-03-31', 'Finalizada'),
+ (66, '2025-01-18', '2025-02-14', '2025-02-20', 'Finalizada'),
+ (19, '2025-02-11', '2025-02-14', '2025-02-17', 'Confirmada'),
+ (23, '2025-03-28', '2025-04-05', '2025-04-06', 'Confirmada'),
+ (96, '2024-09-02', '2024-09-28', '2024-10-05', 'Finalizada'),
+ (72, '2024-08-04', '2024-08-10', '2024-08-16', 'Confirmada'),
+ (55, '2025-05-07', '2025-06-06', '2025-06-13', 'Finalizada'),
+ (14, '2025-05-08', '2025-05-28', '2025-06-03', 'Cancelada'),
+ (91, '2024-11-03', '2024-11-08', '2024-11-13', 'Finalizada'),
+ (6, '2025-01-12', '2025-01-21', '2025-01-24', 'Finalizada'),
+ (94, '2024-09-08', '2024-09-21', '2024-09-22', 'Finalizada'),
+ (5, '2024-12-09', '2024-12-25', '2024-12-26', 'Cancelada'),
+ (38, '2025-05-06', '2025-05-28', '2025-05-30', 'Cancelada'),
+ (31, '2024-07-29', '2024-08-15', '2024-08-18', 'Confirmada'),
+ (95, '2024-10-04', '2024-10-29', '2024-11-02', 'Cancelada'),
+ (35, '2025-04-16', '2025-05-12', '2025-05-16', 'Cancelada'),
+ (2, '2024-06-06', '2024-06-16', '2024-06-21', 'Cancelada'),
+ (71, '2024-10-22', '2024-11-07', '2024-11-08', 'Finalizada'),
+ (74, '2024-05-26', '2024-06-13', '2024-06-16', 'Finalizada'),
+ (5, '2024-05-27', '2024-06-11', '2024-06-15', 'Finalizada'),
+ (16, '2025-03-15', '2025-03-28', '2025-03-31', 'Cancelada'),
+ (7, '2025-05-05', '2025-05-06', '2025-05-09', 'Finalizada'),
+ (5, '2024-06-15', '2024-06-24', '2024-06-30', 'Finalizada'),
+ (75, '2024-10-01', '2024-10-24', '2024-10-31', 'Cancelada'),
+ (88, '2024-05-13', '2024-06-07', '2024-06-09', 'Finalizada'),
+ (67, '2024-09-02', '2024-09-13', '2024-09-17', 'Cancelada'),
+ (27, '2024-09-07', '2024-09-11', '2024-09-16', 'Cancelada'),
+ (32, '2024-06-02', '2024-06-21', '2024-06-27', 'Finalizada'),
+ (69, '2024-05-11', '2024-06-02', '2024-06-05', 'Confirmada'),
+ (20, '2024-05-23', '2024-06-03', '2024-06-10', 'Finalizada'),
+ (2, '2025-01-08', '2025-01-27', '2025-02-03', 'Confirmada'),
+ (73, '2024-05-27', '2024-06-01', '2024-06-04', 'Cancelada'),
+ (38, '2024-07-10', '2024-07-31', '2024-08-03', 'Cancelada'),
+ (64, '2025-04-15', '2025-05-11', '2025-05-15', 'Finalizada'),
+ (56, '2024-12-27', '2025-01-02', '2025-01-03', 'Confirmada'),
+ (73, '2025-04-13', '2025-04-15', '2025-04-19', 'Confirmada'),
+ (44, '2024-07-15', '2024-08-14', '2024-08-15', 'Finalizada'),
+ (62, '2024-11-09', '2024-12-09', '2024-12-15', 'Finalizada'),
+ (100, '2025-01-18', '2025-01-27', '2025-02-02', 'Finalizada'),
+ (25, '2024-06-11', '2024-06-14', '2024-06-19', 'Cancelada'),
+ (36, '2024-12-24', '2025-01-20', '2025-01-22', 'Finalizada'),
+ (22, '2024-07-04', '2024-07-07', '2024-07-13', 'Finalizada'),
+ (21, '2024-05-18', '2024-06-06', '2024-06-07', 'Finalizada'),
+ (81, '2025-02-23', '2025-03-21', '2025-03-26', 'Finalizada'),
+ (50, '2024-12-14', '2025-01-08', '2025-01-12', 'Cancelada'),
+ (40, '2024-07-02', '2024-07-12', '2024-07-13', 'Cancelada'),
+ (100, '2025-03-15', '2025-04-11', '2025-04-17', 'Cancelada'),
+ (34, '2024-06-19', '2024-07-07', '2024-07-12', 'Finalizada'),
+ (41, '2024-06-09', '2024-06-20', '2024-06-22', 'Finalizada'),
+ (56, '2025-02-10', '2025-03-08', '2025-03-10', 'Confirmada'),
+ (97, '2024-06-05', '2024-06-22', '2024-06-24', 'Finalizada'),
+ (90, '2025-01-01', '2025-01-31', '2025-02-07', 'Finalizada'),
+ (50, '2025-03-08', '2025-03-20', '2025-03-24', 'Confirmada'),
+ (72, '2025-01-22', '2025-02-21', '2025-02-25', 'Finalizada'),
+ (79, '2024-06-24', '2024-07-20', '2024-07-27', 'Confirmada'),
+ (3, '2024-07-28', '2024-08-09', '2024-08-14', 'Confirmada'),
+ (88, '2025-03-25', '2025-04-01', '2025-04-07', 'Cancelada'),
+ (81, '2024-06-18', '2024-07-11', '2024-07-15', 'Confirmada'),
+ (94, '2025-05-08', '2025-06-01', '2025-06-03', 'Finalizada'),
+ (31, '2024-11-16', '2024-11-25', '2024-11-27', 'Cancelada'),
+ (10, '2024-10-26', '2024-11-14', '2024-11-18', 'Confirmada'),
+ (96, '2024-06-11', '2024-07-04', '2024-07-08', 'Finalizada'),
+ (91, '2024-06-24', '2024-06-28', '2024-06-30', 'Confirmada'),
+ (57, '2024-11-10', '2024-12-10', '2024-12-11', 'Cancelada'),
+ (82, '2025-02-13', '2025-02-26', '2025-03-01', 'Cancelada'),
+ (56, '2025-04-09', '2025-05-08', '2025-05-15', 'Cancelada'),
+ (79, '2024-10-31', '2024-11-11', '2024-11-12', 'Cancelada'),
+ (4, '2024-11-21', '2024-12-07', '2024-12-08', 'Cancelada'),
+ (26, '2025-02-17', '2025-03-14', '2025-03-18', 'Cancelada'),
+ (56, '2025-04-20', '2025-05-15', '2025-05-21', 'Finalizada'),
+ (87, '2024-07-15', '2024-07-28', '2024-08-03', 'Confirmada'),
+ (75, '2024-12-06', '2024-12-21', '2024-12-24', 'Finalizada'),
+ (17, '2024-06-19', '2024-07-08', '2024-07-14', 'Cancelada'),
+ (42, '2024-07-03', '2024-07-30', '2024-07-31', 'Cancelada'),
+ (61, '2025-04-08', '2025-05-08', '2025-05-13', 'Confirmada'),
+ (6, '2024-10-02', '2024-10-05', '2024-10-10', 'Cancelada'),
+ (47, '2025-02-18', '2025-02-19', '2025-02-20', 'Confirmada'),
+ (92, '2025-04-05', '2025-04-09', '2025-04-15', 'Finalizada'),
+ (61, '2024-10-21', '2024-10-23', '2024-10-26', 'Confirmada'),
+ (41, '2024-11-25', '2024-12-08', '2024-12-10', 'Finalizada'),
+ (36, '2024-06-30', '2024-07-14', '2024-07-20', 'Confirmada'),
+ (77, '2024-06-11', '2024-06-16', '2024-06-20', 'Cancelada'),
+ (66, '2025-01-09', '2025-01-11', '2025-01-13', 'Confirmada'),
+ (18, '2024-11-23', '2024-12-23', '2024-12-27', 'Finalizada'),
+ (83, '2024-05-23', '2024-06-16', '2024-06-23', 'Finalizada'),
+ (6, '2025-02-18', '2025-03-14', '2025-03-21', 'Finalizada'),
+ (6, '2025-04-17', '2025-05-14', '2025-05-19', 'Finalizada'),
+ (96, '2024-12-11', '2025-01-03', '2025-01-09', 'Cancelada'),
+ (24, '2024-08-15', '2024-08-27', '2024-09-03', 'Finalizada'),
+ (11, '2024-06-16', '2024-06-19', '2024-06-24', 'Confirmada'),
+ (34, '2025-02-18', '2025-02-25', '2025-03-04', 'Cancelada'),
+ (42, '2025-03-14', '2025-04-06', '2025-04-12', 'Cancelada'),
+ (34, '2024-10-04', '2024-10-21', '2024-10-25', 'Confirmada'),
+ (97, '2025-04-24', '2025-05-23', '2025-05-27', 'Finalizada'),
+ (20, '2024-10-02', '2024-10-04', '2024-10-10', 'Finalizada'),
+ (23, '2024-12-02', '2024-12-23', '2024-12-28', 'Confirmada'),
+ (97, '2025-05-01', '2025-05-12', '2025-05-19', 'Confirmada'),
+ (25, '2024-09-13', '2024-10-04', '2024-10-11', 'Cancelada'),
+ (79, '2024-12-15', '2024-12-23', '2024-12-30', 'Cancelada'),
+ (67, '2025-02-06', '2025-02-12', '2025-02-18', 'Cancelada');
+
+
+ --pagos
+INSERT INTO Pagos (id_reserva, fecha_pago, monto, metodo_pago, estado_pago)
+VALUES
+(1, '2024-12-19', 921.4, 'Efectivo', 'Pendiente'),
+ (2, '2024-12-09', 794.37, 'Efectivo', 'Reembolsado'),
+ (3, '2024-10-10', 174.17, 'Transferencia', 'Pendiente'),
+ (4, '2025-04-28', 102.21, 'Efectivo', 'Pagado'),
+ (5, '2024-09-07', 484.96, 'Tarjeta', 'Reembolsado'),
+ (6, '2024-08-13', 506.42, 'Tarjeta', 'Reembolsado'),
+ (7, '2024-12-16', 425.85, 'Transferencia', 'Pagado'),
+ (8, '2025-02-04', 222.5, 'Efectivo', 'Pagado'),
+ (9, '2024-06-15', 760.38, 'Efectivo', 'Pendiente'),
+ (10, '2024-07-09', 897.34, 'Efectivo', 'Pagado'),
+ (11, '2024-12-31', 472.45, 'Efectivo', 'Reembolsado'),
+ (12, '2024-10-15', 380.13, 'Tarjeta', 'Pagado'),
+ (13, '2025-04-06', 640.4, 'Transferencia', 'Pagado'),
+ (14, '2025-03-08', 422.1, 'Efectivo', 'Pendiente'),
+ (15, '2024-09-29', 148.61, 'Tarjeta', 'Reembolsado'),
+ (16, '2025-02-20', 911.66, 'Tarjeta', 'Reembolsado'),
+ (17, '2024-08-29', 378.77, 'Tarjeta', 'Pendiente'),
+ (18, '2025-05-11', 262.6, 'Tarjeta', 'Pendiente'),
+ (19, '2024-09-25', 271.44, 'Tarjeta', 'Pagado'),
+ (20, '2024-11-23', 421.85, 'Efectivo', 'Pagado'),
+ (21, '2024-10-03', 415.71, 'Efectivo', 'Pendiente'),
+ (22, '2024-05-19', 654.41, 'Transferencia', 'Pagado'),
+ (23, '2024-05-14', 390.52, 'Transferencia', 'Reembolsado'),
+ (24, '2024-05-11', 884.5, 'Tarjeta', 'Pendiente'),
+ (25, '2024-07-05', 172.41, 'Efectivo', 'Reembolsado'),
+ (26, '2024-08-19', 875.9, 'Tarjeta', 'Pagado'),
+ (27, '2025-02-22', 683.2, 'Efectivo', 'Pagado'),
+ (28, '2025-01-30', 400.25, 'Efectivo', 'Pendiente'),
+ (29, '2025-02-04', 971.33, 'Efectivo', 'Reembolsado'),
+ (30, '2024-07-31', 662.98, 'Tarjeta', 'Pagado'),
+ (31, '2025-01-19', 100.65, 'Tarjeta', 'Pagado'),
+ (32, '2025-04-26', 949.97, 'Transferencia', 'Pagado'),
+ (33, '2024-07-03', 244.5, 'Efectivo', 'Reembolsado'),
+ (34, '2024-07-22', 711.85, 'Transferencia', 'Pendiente'),
+ (35, '2024-06-24', 951.04, 'Tarjeta', 'Reembolsado'),
+ (36, '2025-03-28', 710.6, 'Efectivo', 'Pagado'),
+ (37, '2024-11-17', 316.26, 'Tarjeta', 'Pendiente'),
+ (38, '2025-02-20', 253.02, 'Efectivo', 'Pendiente'),
+ (39, '2024-11-14', 303.44, 'Tarjeta', 'Pendiente'),
+ (40, '2025-01-24', 426.96, 'Transferencia', 'Pagado'),
+ (41, '2024-06-28', 447.86, 'Efectivo', 'Pagado'),
+ (42, '2024-08-26', 937.27, 'Efectivo', 'Reembolsado'),
+ (43, '2024-08-20', 450.92, 'Efectivo', 'Pagado'),
+ (44, '2025-03-24', 117.56, 'Tarjeta', 'Reembolsado'),
+ (45, '2024-07-03', 103.33, 'Efectivo', 'Pagado'),
+ (46, '2025-04-14', 615.7, 'Efectivo', 'Pagado'),
+ (47, '2024-05-26', 706.23, 'Tarjeta', 'Pagado'),
+ (48, '2024-07-16', 476.86, 'Transferencia', 'Reembolsado'),
+ (49, '2025-05-02', 399.63, 'Efectivo', 'Pagado'),
+ (50, '2025-01-20', 427.62, 'Efectivo', 'Reembolsado'),
+ (51, '2024-09-24', 460.35, 'Efectivo', 'Pendiente'),
+ (52, '2025-03-22', 609.5, 'Tarjeta', 'Pagado'),
+ (53, '2025-02-25', 488.39, 'Tarjeta', 'Pagado'),
+ (54, '2024-09-13', 524.02, 'Efectivo', 'Pendiente'),
+ (55, '2024-07-27', 316.05, 'Tarjeta', 'Pendiente'),
+ (56, '2025-01-11', 928.38, 'Efectivo', 'Pendiente'),
+ (57, '2024-06-16', 998.17, 'Transferencia', 'Pendiente'),
+ (58, '2024-11-21', 588.11, 'Transferencia', 'Reembolsado'),
+ (59, '2025-03-15', 801.64, 'Efectivo', 'Pendiente'),
+ (60, '2024-11-19', 136.27, 'Tarjeta', 'Pendiente'),
+ (61, '2024-07-06', 967.71, 'Efectivo', 'Reembolsado'),
+ (62, '2025-01-11', 889.88, 'Efectivo', 'Pagado'),
+ (63, '2024-08-16', 742.13, 'Efectivo', 'Pendiente'),
+ (64, '2024-09-12', 757.9, 'Tarjeta', 'Pendiente'),
+ (65, '2024-07-23', 932.11, 'Transferencia', 'Pendiente'),
+ (66, '2025-01-12', 643.77, 'Efectivo', 'Pagado'),
+ (67, '2024-06-24', 406.45, 'Tarjeta', 'Pagado'),
+ (68, '2025-01-05', 631.18, 'Tarjeta', 'Reembolsado'),
+ (69, '2025-01-26', 201.26, 'Tarjeta', 'Pendiente'),
+ (70, '2025-02-03', 228.42, 'Tarjeta', 'Pendiente'),
+ (71, '2024-08-13', 667.24, 'Efectivo', 'Pagado'),
+ (72, '2024-09-24', 889.42, 'Tarjeta', 'Pagado'),
+ (73, '2025-03-17', 751.11, 'Tarjeta', 'Pendiente'),
+ (74, '2024-10-13', 442.1, 'Efectivo', 'Pendiente'),
+ (75, '2025-03-05', 596.29, 'Efectivo', 'Reembolsado'),
+ (76, '2024-06-20', 469.49, 'Tarjeta', 'Reembolsado'),
+ (77, '2024-08-25', 287.36, 'Efectivo', 'Pagado'),
+ (78, '2025-03-07', 199.27, 'Tarjeta', 'Pagado'),
+ (79, '2025-05-06', 128.1, 'Transferencia', 'Pendiente'),
+ (80, '2024-10-08', 517.17, 'Transferencia', 'Reembolsado'),
+ (81, '2024-12-13', 736.33, 'Efectivo', 'Pendiente'),
+ (82, '2024-09-26', 590.42, 'Transferencia', 'Pagado'),
+ (83, '2024-05-23', 252.31, 'Efectivo', 'Pagado'),
+ (84, '2025-01-13', 305.42, 'Transferencia', 'Pagado'),
+ (85, '2024-09-16', 837.08, 'Tarjeta', 'Reembolsado'),
+ (86, '2024-08-08', 762.29, 'Transferencia', 'Pendiente'),
+ (87, '2024-10-11', 715.77, 'Tarjeta', 'Pendiente'),
+ (88, '2024-05-24', 909.3, 'Tarjeta', 'Reembolsado'),
+ (89, '2025-03-01', 551.41, 'Tarjeta', 'Reembolsado'),
+ (90, '2024-10-21', 725.64, 'Tarjeta', 'Reembolsado'),
+ (91, '2024-12-05', 769.4, 'Tarjeta', 'Pagado'),
+ (92, '2024-08-23', 892.44, 'Tarjeta', 'Pendiente'),
+ (93, '2025-03-09', 451.24, 'Tarjeta', 'Reembolsado'),
+ (94, '2025-03-17', 375.54, 'Tarjeta', 'Pendiente'),
+ (95, '2024-07-11', 831.65, 'Transferencia', 'Pagado'),
+ (96, '2025-05-03', 232.88, 'Transferencia', 'Reembolsado'),
+ (97, '2024-08-20', 670.65, 'Transferencia', 'Pagado'),
+ (98, '2024-05-29', 727.16, 'Transferencia', 'Reembolsado'),
+ (99, '2025-02-24', 284.43, 'Transferencia', 'Reembolsado'),
+ (100, '2024-08-22', 983.55, 'Efectivo', 'Pendiente');
+
+
+-- Trigger 1: Calcular subtotal en Detalle_Reserva
+CREATE OR REPLACE FUNCTION calcular_subtotal_detalle()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.subtotal := NEW.precio_por_noche * NEW.nro_noches;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_calcular_subtotal_detalle
+BEFORE INSERT OR UPDATE ON Detalle_Reserva
+FOR EACH ROW
+EXECUTE FUNCTION calcular_subtotal_detalle();
+
+
+-- Trigger 2: Cambiar estado de habitación a 'Ocupada' al check-in
+CREATE OR REPLACE FUNCTION actualizar_estado_habitacion_checkin()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Habitaciones
+    SET estado = 'Ocupada'
+    WHERE id_habitacion IN (
+        SELECT id_habitacion FROM Detalle_Reserva WHERE id_reserva = NEW.id_reserva
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_estado_habitacion_checkin
+AFTER INSERT ON CheckIn_CheckOut
+FOR EACH ROW
+WHEN (NEW.fecha_checkin IS NOT NULL)
+EXECUTE FUNCTION actualizar_estado_habitacion_checkin();
+
+-- Trigger 3: Cambiar estado de habitación a 'Mantenimiento' al checkout
+CREATE OR REPLACE FUNCTION liberar_habitacion_checkout()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Habitaciones
+    SET estado = 'Mantenimiento'
+    WHERE id_habitacion IN (
+        SELECT id_habitacion FROM Detalle_Reserva WHERE id_reserva = NEW.id_reserva
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_liberar_habitacion_checkout
+AFTER UPDATE ON CheckIn_CheckOut
+FOR EACH ROW
+WHEN (NEW.fecha_checkout IS NOT NULL)
+EXECUTE FUNCTION liberar_habitacion_checkout();
+
+ 
+ 
