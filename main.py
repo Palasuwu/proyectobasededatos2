@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:2604@localhost:5432/hoteldb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:48481012al@localhost:5432/hoteldb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -184,6 +184,29 @@ def crear_cliente():
         logging.error(f"Error al crear cliente: {e}")
         return jsonify({"error": "No se pudo crear el cliente", "detalles": str(e)}), 500
 
+@app.route("/clientes", methods=["GET"])
+def obtener_clientes():
+    """
+    Obtiene todos los clientes.
+    """
+    try:
+        clientes = Cliente.query.all()
+        resultado = [
+            {
+                "id_cliente": c.id_cliente,
+                "nombre": c.nombre,
+                "apellido": c.apellido,
+                "correo": c.correo,
+                "telefono": c.telefono,
+                "documento_identidad": c.documento_identidad
+            }
+            for c in clientes
+        ]
+        return jsonify(resultado), 200
+    except Exception as e:
+        logging.error(f"Error al obtener clientes: {e}")
+        return jsonify({"error": "No se pudieron obtener los clientes", "detalles": str(e)}), 500
+        
 @app.route("/reservas", methods=["POST"])
 def agregar_reserva():
     """

@@ -52,7 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
   form.style.flexDirection = "column";
   form.style.gap = "10px";
   form.innerHTML = `
-    <label>ID Cliente: <input type="number" id="id_cliente" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></label>
+    <label>Cliente: 
+  <select id="id_cliente" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+    <option value="" disabled selected>Seleccione un cliente</option>
+  </select>
+</label>
     <label>Fecha Entrada: <input type="date" id="fecha_entrada" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></label>
     <label>Fecha Salida: <input type="date" id="fecha_salida" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></label>
     <label>Estado: 
@@ -69,6 +73,20 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
   formSection.appendChild(form);
   document.body.appendChild(formSection);
+
+  // Fetch cientes disponibles y llenar el dropdown
+fetch("http://127.0.0.1:5000/clientes")
+  .then(res => res.json())
+  .then(clientes => {
+    const clientSelect = document.getElementById("id_cliente");
+    clientes.forEach(cliente => {
+      const option = document.createElement("option");
+      option.value = cliente.id_cliente;
+      option.textContent = `${cliente.nombre} ${cliente.apellido}`;
+      clientSelect.appendChild(option);
+    });
+  })
+  .catch(err => console.error("Error al cargar clientes:", err));
 
   // Sección de clientes
   const clientSection = document.createElement("section");
