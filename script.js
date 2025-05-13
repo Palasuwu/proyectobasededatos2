@@ -216,14 +216,21 @@ function renderReservas(data) {
       background: #f9f9f9;
     `;
 
+    // Create editable fields for reservation details
     div.innerHTML = `
       <p><strong>ID Reserva:</strong> ${r.id_reserva}</p>
-      <p><strong>Cliente:</strong> ${r.cliente_nombre}</p>
-      <p><strong>Teléfono:</strong> ${r.cliente_telefono}</p>
-      <p><strong>Habitación:</strong> ${r.habitacion_numero} (${r.habitacion_tipo})</p>
-      <p><strong>Entrada:</strong> ${r.fecha_entrada}</p>
-      <p><strong>Salida:</strong> ${r.fecha_salida}</p>
-      <p><strong>Estado:</strong> ${r.estado}</p>
+      <p><strong>Cliente:</strong> <input type="text" id="cliente_nombre_${r.id_reserva}" value="${r.cliente_nombre}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
+      <p><strong>Teléfono:</strong> <input type="text" id="cliente_telefono_${r.id_reserva}" value="${r.cliente_telefono}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
+      <p><strong>Habitación:</strong> <input type="text" id="habitacion_numero_${r.id_reserva}" value="${r.habitacion_numero}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
+      <p><strong>Entrada:</strong> <input type="date" id="fecha_entrada_${r.id_reserva}" value="${r.fecha_entrada}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
+      <p><strong>Salida:</strong> <input type="date" id="fecha_salida_${r.id_reserva}" value="${r.fecha_salida}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled></p>
+      <p><strong>Estado:</strong> 
+        <select id="estado_${r.id_reserva}" style="width:100%; padding:5px; border:1px solid #ccc; border-radius:4px;" disabled>
+          <option value="Confirmada" ${r.estado === "Confirmada" ? "selected" : ""}>Confirmada</option>
+          <option value="Cancelada" ${r.estado === "Cancelada" ? "selected" : ""}>Cancelada</option>
+          <option value="Finalizada" ${r.estado === "Finalizada" ? "selected" : ""}>Finalizada</option>
+        </select>
+      </p>
     `;
 
     // Add Edit button
@@ -239,13 +246,63 @@ function renderReservas(data) {
       cursor: pointer;
     `;
     editBtn.onclick = () => {
-      // Populate the form with reservation data for editing
-      document.getElementById("id_cliente").value = r.id_cliente;
-      document.getElementById("id_habitacion").value = r.id_habitacion;
-      document.getElementById("fecha_entrada").value = r.fecha_entrada;
-      document.getElementById("fecha_salida").value = r.fecha_salida;
-      document.getElementById("estado").value = r.estado;
-      editingReservaId = r.id_reserva;
+      // Enable editing for the fields
+      document.getElementById(`cliente_nombre_${r.id_reserva}`).disabled = false;
+      document.getElementById(`cliente_telefono_${r.id_reserva}`).disabled = false;
+      document.getElementById(`habitacion_numero_${r.id_reserva}`).disabled = false;
+      document.getElementById(`fecha_entrada_${r.id_reserva}`).disabled = false;
+      document.getElementById(`fecha_salida_${r.id_reserva}`).disabled = false;
+      document.getElementById(`estado_${r.id_reserva}`).disabled = false;
+
+      // Show the Update button
+      updateBtn.style.display = "inline-block";
+      editBtn.style.display = "none";
+    };
+
+    // Add Update button
+    const updateBtn = document.createElement("button");
+    updateBtn.innerText = "Actualizar";
+    updateBtn.style = `
+      margin-right: 10px; 
+      padding: 5px 10px; 
+      background: #4CAF50; 
+      color: white; 
+      border: none; 
+      border-radius: 4px; 
+      cursor: pointer;
+      display: none;
+    `;
+    updateBtn.onclick = () => {
+      // Collect updated data
+      const updatedData = {
+        cliente_nombre: document.getElementById(`cliente_nombre_${r.id_reserva}`).value,
+        cliente_telefono: document.getElementById(`cliente_telefono_${r.id_reserva}`).value,
+        habitacion_numero: document.getElementById(`habitacion_numero_${r.id_reserva}`).value,
+        fecha_entrada: document.getElementById(`fecha_entrada_${r.id_reserva}`).value,
+        fecha_salida: document.getElementById(`fecha_salida_${r.id_reserva}`).value,
+        estado: document.getElementById(`estado_${r.id_reserva}`).value,
+      };
+
+      // Send the updated data to the backend
+      fetch(`${apiURL}/${r.id_reserva}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      })
+        .then(res => res.json())
+        .then(response => {
+          if (response.error) {
+            console.error("Error response:", response);
+            alert("Error: " + response.detalles);
+          } else {
+            alert("Reserva actualizada exitosamente");
+            return fetch(apiURL).then(res => res.json()).then(renderReservas);
+          }
+        })
+        .catch(err => {
+          console.error("Fetch error:", err);
+          alert("Error al actualizar reserva: " + err);
+        });
     };
 
     // Add Delete button
@@ -261,12 +318,10 @@ function renderReservas(data) {
     `;
     deleteBtn.onclick = () => {
       if (confirm("¿Estás seguro de eliminar esta reserva?")) {
-        fetch(`http://127.0.0.1:5000/reservas/${r.id_reserva}`, { method: "DELETE" })
+        fetch(`${apiURL}/${r.id_reserva}`, { method: "DELETE" })
           .then(() => {
             alert("Reserva eliminada.");
-            return fetch("http://127.0.0.1:5000/reservas")
-              .then(res => res.json())
-              .then(renderReservas);
+            return fetch(apiURL).then(res => res.json()).then(renderReservas);
           })
           .catch(err => alert("Error al eliminar reserva: " + err));
       }
@@ -274,6 +329,7 @@ function renderReservas(data) {
 
     // Append buttons to the reservation card
     div.appendChild(editBtn);
+    div.appendChild(updateBtn);
     div.appendChild(deleteBtn);
 
     // Append the reservation card to the list
