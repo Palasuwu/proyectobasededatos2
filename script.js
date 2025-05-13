@@ -1,6 +1,6 @@
 const apiURL = "http://127.0.0.1:5000/reservas";
 let editingReservaId = null;
-
+//
 document.addEventListener("DOMContentLoaded", () => {
   // Apply global styles
   document.body.style.fontFamily = "Arial, sans-serif";
